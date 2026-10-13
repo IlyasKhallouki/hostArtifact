@@ -25,6 +25,13 @@ SECRET_ENV = {
 }
 
 
+def secret_env(settings):
+    result = dict(SECRET_ENV)
+    if settings.umami_enabled:
+        result["UMAMI_CREDENTIALS"] = "publisher-umami-credentials"
+    return result
+
+
 def bootstrap(s, cloud, apply):
     p, r = s.gcp_project_id, s.region
     resources = [
@@ -82,7 +89,7 @@ def bootstrap(s, cloud, apply):
                 ["iam", "service-accounts", "create", name, f"--display-name={MARKER}"],
             )
         )
-    for secret in SECRET_ENV.values():
+    for secret in secret_env(s).values():
         resources.append(
             (
                 ["secrets", "describe", secret],
@@ -168,7 +175,7 @@ def bootstrap(s, cloud, apply):
             "--role=roles/storage.objectViewer",
         ]
     )
-    for env, secret in SECRET_ENV.items():
+    for env, secret in secret_env(s).items():
         name = "publisher-viewer" if env == "COOKIE_SIGNING_KEY" else "publisher-api"
         bindings.append(
             [
@@ -215,8 +222,8 @@ def bootstrap(s, cloud, apply):
         cloud.ensure(describe, create, expected=expected)
     for command in bindings:
         cloud.run(*command)
-    for env, secret in SECRET_ENV.items():
-        if env.startswith("GOOGLE_"):
+    for env, secret in secret_env(s).items():
+        if env.startswith("GOOGLE_") or env == "UMAMI_CREDENTIALS":
             continue
         versions = cloud.run(
             "secrets", "versions", "list", secret, "--filter=state:ENABLED", "--limit=1"
@@ -307,6 +314,11 @@ def deployment(s, cloud, apply, allow_dirty, service="all", pinned_image=None):
             "admin_emails",
             "default_access_mode",
             "max_html_bytes",
+            "umami_enabled",
+            "umami_url",
+            "umami_api_url",
+            "umami_script_url",
+            "umami_team_id",
         )
     }
     env.update(GIT_SHA=sha, STORAGE_BACKEND="gcp", AUTH_MODE="google")
@@ -319,7 +331,8 @@ def deployment(s, cloud, apply, allow_dirty, service="all", pinned_image=None):
             "note": "Resolve built image digest once, pin secret versions, deploy that same digest to both services. Save previous revisions for rollback.",
         }
     secret_versions = {}
-    for env_name, secret in SECRET_ENV.items():
+    deploy_secrets = secret_env(s)
+    for env_name, secret in deploy_secrets.items():
         if service != "all" and (env_name == "COOKIE_SIGNING_KEY") != (
             service == "viewer"
         ):

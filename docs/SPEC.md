@@ -149,3 +149,9 @@ The committed plugin is a generic template. Packaging renders a configured copy 
 `local_acceptance.py` exercises the local HTTP API and viewer. Deployment smoke tests check health and OAuth discovery; `--claude-oauth` also checks Claude's metadata-based client ID through consent. Neither replaces a real Google login and publishing session in Claude.
 
 Before distributing a deployment, verify publishing and updating at the same URL, password access, expiry, version rollback, unpublish/restore and replacement links. Verify blocked-account behavior where an account is available. For custom domains, check publishing, movement, old-link redirects and default isolation. Delete temporary test pages after acceptance.
+
+## Optional Umami analytics
+
+With Umami enabled, publish registers one website per artifact and includes its dashboard URL and registration status in tool results. Updates, restores and domain changes reuse the website ID. Existing artifacts can be registered through `publisher-admin analytics sync --apply`; without `--apply`, the command is read-only. Registration failures leave the page published and report pending analytics. Sync uses a metadata lease and an exact stable-name lookup to recover uncertain creates.
+
+The viewer injects a tracker only into successfully served content, after all access checks. It removes private paths, queries, fragments, referrers and identity/custom-event data from pageview payloads. Tracking never changes stored versions; ETags reflect the rendered HTML. Credentials stay in the API service. Analytics is disabled by default. Setup, retry and retention behavior are documented in [UMAMI.md](UMAMI.md).

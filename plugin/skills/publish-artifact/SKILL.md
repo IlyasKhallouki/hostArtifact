@@ -25,3 +25,7 @@ Resolve a pasted link or use list_artifacts. If necessary fetch get_artifact(inc
 - Take down only on explicit request; confirm the page and use unpublish_artifact. It can be restored.
 - Permanent deletion requires an admin, an unpublished page and exact title confirmation. Prefer unpublishing unless the user insists.
 - On FORBIDDEN, call whoami and explain its precise reason and fix. Never suggest granting broad cloud roles to a colleague who only needs publishing access.
+
+## Analytics
+
+When a tool result includes `analytics.dashboard_url`, include that Umami dashboard link alongside the page link. If analytics is pending, explain that the page is published and its analytics setup needs a retry. Automatic tracking is handled by the viewer; do not embed another Umami script in the HTML.

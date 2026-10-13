@@ -1,3 +1,4 @@
+import hashlib
 import html
 import time
 from collections import OrderedDict, defaultdict, deque
@@ -10,6 +11,7 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.routing import Route
 
+from publisher.analytics import inject
 from publisher.domains import artifact_url, known_hosts
 from publisher.models import now
 from publisher.passwords import verify
@@ -162,14 +164,16 @@ def create_viewer(service):
             html_cache[blob_path] = content
             cache_bytes += size
         html_cache.move_to_end(blob_path)
+        content = inject(settings, item, html_cache[blob_path])
+        digest = hashlib.sha256(content.encode()).hexdigest()
         headers = dict(HEADERS)
         if item["access_mode"] == "link":
             headers.update(
-                {"Cache-Control": "private, no-cache", "ETag": f'"{version["sha256"]}"'}
+                {"Cache-Control": "private, no-cache", "ETag": f'"{digest}"'}
             )
             if request.headers.get("if-none-match") == headers["ETag"]:
                 return Response(status_code=304, headers=headers)
-        return HTMLResponse(html_cache[blob_path], headers=headers)
+        return HTMLResponse(content, headers=headers)
 
     return Starlette(
         routes=[

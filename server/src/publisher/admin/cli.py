@@ -26,6 +26,10 @@ def main():
     pre.add_argument(
         "--json", action="store_true", help="Output is always structured JSON"
     )
+    analytics = sub.add_parser("analytics")
+    analytics.add_argument("action", choices=["sync"])
+    analytics.add_argument("--artifact", help="Sync one page ID; defaults to all pages")
+    analytics.add_argument("--apply", action="store_true")
     domains = sub.add_parser("domains")
     actions = domains.add_subparsers(dest="action", required=True)
     actions.add_parser("discover")
@@ -46,6 +50,41 @@ def main():
     settings = Settings()
     cloud = Gcloud(settings.gcp_project_id, progress=progress)
     try:
+        if args.command == "analytics":
+            from publisher.analytics import sync_artifact
+            from publisher.service import ArtifactService
+            from publisher.storage import create_stores
+
+            if not settings.umami_enabled:
+                raise ValueError(
+                    "Set UMAMI_ENABLED=true and UMAMI_URL before syncing analytics."
+                )
+            metadata, blobs = create_stores(settings)
+            service = ArtifactService(metadata, blobs, settings)
+            state = metadata.read()
+            identifiers = [args.artifact] if args.artifact else list(state["artifacts"])
+            if any(identifier not in state["artifacts"] for identifier in identifiers):
+                raise ValueError("Unknown artifact ID")
+            if not args.apply:
+                print(
+                    json.dumps(
+                        {
+                            "artifacts": identifiers,
+                            "action": "Register or update Umami websites. Pass --apply to save.",
+                        },
+                        indent=2,
+                    )
+                )
+                return 0
+            results = []
+            for identifier in identifiers:
+                progress(f"Syncing analytics for {identifier}")
+                sync_artifact(service, identifier)
+                results.append(
+                    {"id": identifier, **service.get_artifact(identifier)["analytics"]}
+                )
+            print(json.dumps({"analytics": results}, indent=2))
+            return 0 if all(row["status"] == "active" for row in results) else 2
         if args.command == "preflight":
             result = check(settings, cloud, args.profile)
             print(json.dumps(result, indent=2))

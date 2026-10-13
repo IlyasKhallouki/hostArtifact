@@ -90,3 +90,7 @@ Google Cloud charges for the services you provision. The API keeps one instance 
 ## License
 
 This repository does not currently include an open-source license. The plugin manifest retains its `Proprietary` designation.
+
+## Analytics
+
+[Optional Umami integration](docs/UMAMI.md) registers each published page and returns a link to its dashboard. Updates keep the same history. Existing pages can be registered with the admin sync command.

@@ -20,3 +20,7 @@ Updates keep the same link. If a link has been shared too widely, ask Claude to 
 Use complete HTML pages with embedded images or images at public URLs. Features that depend on Claude's own runtime need to be adapted before publishing. Review the page for private notes, credentials and information you don't intend to share.
 
 If a tool refuses access, ask "Which account am I using, and what access am I missing?" Claude can report the signed-in account and the reason. Send that explanation to your administrator. They don't need your Google password.
+
+## Visit statistics
+
+If your administrator enables Umami, published pages include an `analytics.dashboard_url`. Open it with your Umami account to see traffic for that page. Updates and link changes keep its history. A pending status means the page is published but analytics registration needs a retry.

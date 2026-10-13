@@ -35,3 +35,9 @@ Serverless network endpoint groups don't accept the description flag used by oth
 ## Public templates and private configuration
 
 The repository contains generic examples. Operators keep project settings in ignored `infra/config.env`; secrets live in Secret Manager. Plugin generation writes deployment-specific files to ignored `dist/` output. This keeps the public template usable without publishing an operator's contact details, cloud resource names or endpoint.
+
+## Umami registration and tracking
+
+Use one Umami website per artifact so every publish result can point to its own dashboard. Keep the website ID through page updates and link changes. Registration runs after the page transaction commits; a failed analytics request cannot roll back the page. A lease serializes registration, and a stable website-name prefix recovers creates whose responses were lost. This works with Umami v2, which assigns website IDs itself.
+
+Inject tracking at serve time after access checks. Normalize pageview URLs to artifact IDs, omit referrers and discard identity/custom-event payloads so analytics never receives bearer links from the injected tracker. Keep historical statistics when a page is removed. The optional credential belongs only to the API service; the viewer needs no Umami API access.

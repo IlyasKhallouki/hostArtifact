@@ -176,3 +176,7 @@ Existing separately hosted pages aren't imported automatically. Republish their 
 ## Teardown
 
 Export anything you need to retain, inventory shared dependencies and account for links that will stop working. Remove only publisher-owned resources. Delete the content bucket and database last, after reviewing the retained data and disabling database deletion protection deliberately. Remove publisher-specific IAM bindings without replacing unrelated bindings. The repository does not include an automatic teardown command.
+
+## Page analytics
+
+See [Umami setup](UMAMI.md) to register pages automatically, share dashboards with a team, or backfill existing pages. Analytics is disabled by default.

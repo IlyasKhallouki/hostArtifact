@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -44,6 +44,12 @@ class Settings(BaseSettings):
     dns_provider_default: str = "squarespace"
     suggested_subdomain: str = "share"
     ar_repo: str = "artifact-publisher"
+    umami_enabled: bool = False
+    umami_url: str = ""
+    umami_api_url: str = ""
+    umami_script_url: str = ""
+    umami_team_id: str = ""
+    umami_credentials: str = Field(default="", repr=False)
 
     @model_validator(mode="after")
     def validate_runtime(self):
@@ -67,6 +73,28 @@ class Settings(BaseSettings):
             )
         if self.storage_backend == "local" and not self.cookie_signing_key:
             self.cookie_signing_key = "local-development-" + "cookie-key-only"
+        if self.umami_enabled:
+            from urllib.parse import urlsplit
+
+            for field in ("umami_url", "umami_api_url", "umami_script_url"):
+                value = getattr(self, field)
+                if not value and field != "umami_url":
+                    value = self.umami_url.rstrip("/") + (
+                        "/api" if field == "umami_api_url" else "/script.js"
+                    )
+                    setattr(self, field, value)
+                parsed = urlsplit(value)
+                if (
+                    parsed.scheme != "https"
+                    or not parsed.hostname
+                    or parsed.username
+                    or parsed.password
+                    or parsed.query
+                    or parsed.fragment
+                ):
+                    raise ValueError(
+                        f"{field.upper()} must be an HTTPS URL without credentials, query or fragment"
+                    )
         return self
 
 

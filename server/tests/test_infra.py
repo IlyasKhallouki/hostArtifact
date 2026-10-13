@@ -76,3 +76,20 @@ def test_viewer_can_deploy_pinned_image_without_oauth(service, monkeypatch, tmp_
         infra.deployment(
             s, Cloud(), True, False, "viewer", image.split("@")[0] + ":latest"
         )
+
+
+def test_umami_secret_is_optional_and_only_granted_to_api(service):
+    service.settings.umami_enabled = True
+    plan = infra.bootstrap(service.settings, None, False)
+    grants = [
+        c
+        for c in plan["commands"]
+        if c[:3] == ["secrets", "add-iam-policy-binding", "publisher-umami-credentials"]
+    ]
+    assert len(grants) == 1
+    assert "publisher-api@" in str(grants[0])
+    assert "publisher-viewer@" not in str(grants[0])
+    assert (
+        infra.secret_env(service.settings)["UMAMI_CREDENTIALS"]
+        == "publisher-umami-credentials"
+    )

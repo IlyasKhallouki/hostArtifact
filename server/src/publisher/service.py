@@ -1,7 +1,7 @@
 import hashlib
 from urllib.parse import urlsplit
 
-from publisher import domains, passwords
+from publisher import analytics, domains, passwords
 from publisher.config import csv
 from publisher.html_utils import apply_edits, normalize
 from publisher.models import Edit, PublisherError, expiry, now
@@ -11,6 +11,22 @@ from publisher.slugs import slugify, token, validate_slug
 class ArtifactService:
     def __init__(self, metadata, blobs, settings):
         self.metadata, self.blobs, self.settings = metadata, blobs, settings
+        self.umami = analytics.Umami(settings) if settings.umami_enabled else None
+
+    def _sync_analytics_result(self, result):
+        if not self.settings.umami_enabled:
+            return result
+        try:
+            analytics.sync_artifact(self, result["id"])
+            result["analytics"] = self.get_artifact(result["id"])["analytics"]
+        except Exception:
+            # The page was committed before analytics started. Preserve its URL
+            # and any one-time password even if the secondary metadata write fails.
+            result["analytics"] = {
+                "status": "pending",
+                "error": "Analytics sync could not finish; retry publisher-admin analytics sync --apply.",
+            }
+        return result
 
     def _find(self, state, artifact):
         if artifact in state["artifacts"]:
@@ -55,6 +71,7 @@ class ArtifactService:
                 "notes",
             )
         }
+        result["analytics"] = analytics.summary(self.settings, item)
         result.update(
             client=item["client_slug"],
             access=item["access_mode"],
@@ -247,7 +264,8 @@ class ArtifactService:
                 result["password"] = secret
             return result
 
-        return self.metadata.transaction(change)
+        result = self.metadata.transaction(change)
+        return self._sync_analytics_result(result)
 
     def update_artifact(
         self, actor, artifact, html=None, edits=None, title=None, note=None
@@ -280,7 +298,8 @@ class ArtifactService:
             self._audit(state, actor, "update", item)
             return self._public(state, item)
 
-        return self.metadata.transaction(change)
+        result = self.metadata.transaction(change)
+        return self._sync_analytics_result(result)
 
     def set_access(
         self,
@@ -381,7 +400,7 @@ class ArtifactService:
         return self._status(actor, artifact, "unpublished")
 
     def restore_artifact(self, actor, artifact):
-        return self._status(actor, artifact, "live")
+        return self._sync_analytics_result(self._status(actor, artifact, "live"))
 
     def delete_artifact_permanently(self, actor, artifact, confirm_title):
         if actor.lower() not in csv(self.settings.admin_emails):
@@ -430,7 +449,8 @@ class ArtifactService:
             self._audit(state, actor, "set_artifact_domain", item)
             return {**self._public(state, item), "previous_url": previous}
 
-        return self.metadata.transaction(change)
+        result = self.metadata.transaction(change)
+        return self._sync_analytics_result(result)
 
     def set_client_domain(self, actor, client, domain):
         def change(state):
