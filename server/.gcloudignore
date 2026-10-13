@@ -1,0 +1,17 @@
+.gcloudignore
+.git
+.gitignore
+.venv/
+.localdata/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc
+tests/
+dist/
+.env
+.env.*
+*.local
+*-key.json
+client_secret*.json
+credentials*.json

@@ -1,0 +1,15 @@
+{
+  "name": "artifact-publisher-plugins",
+  "owner": {
+    "name": "Artifact Publisher contributors"
+  },
+  "plugins": [
+    {
+      "name": "artifact-publisher",
+      "source": "./plugin",
+      "description": "Publish client-facing pages",
+      "version": "0.1.0"
+    }
+  ],
+  "description": "Self-hosted HTML publishing for Claude. Configure a deployment before use."
+}

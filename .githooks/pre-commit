@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+(cd server && uv run ruff check . && uv run ruff format --check .)
+python3 scripts/check_plugin.py
+bash scripts/check_secrets.sh

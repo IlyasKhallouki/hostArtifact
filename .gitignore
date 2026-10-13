@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.localdata/
+dist/
+.env
+.env.*
+*.local
+*-key.json
+client_secret*.json
+credentials*.json
+.DS_Store
+
+# Deployment configuration and local credentials
+infra/config.env
+secrets/
+*.pem
+*.p12
+*.pfx
+# Generated plugin bundles contain deployment-specific endpoints
+plugin-local/

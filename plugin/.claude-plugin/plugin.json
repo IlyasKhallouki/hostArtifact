@@ -1,0 +1,9 @@
+{
+  "name": "artifact-publisher",
+  "version": "0.1.0",
+  "description": "Publish and manage HTML pages on your own Google Cloud deployment.",
+  "author": {
+    "name": "Artifact Publisher contributors"
+  },
+  "license": "Proprietary"
+}
